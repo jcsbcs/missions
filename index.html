@@ -26,12 +26,16 @@
             z-index: 1;
         }
 
-        .missions-text {
+        .content-container {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
+            text-align: center;
+        }
+
+        .missions-text {
             font-size: 120px;
             font-weight: bold;
             color: #0f0;
@@ -42,6 +46,49 @@
                 0 0 40px #0f0;
             letter-spacing: 15px;
             animation: glitch 2s infinite;
+            margin-bottom: 60px;
+        }
+
+        .input-container {
+            margin-top: 40px;
+        }
+
+        .input-label {
+            font-size: 24px;
+            color: #0f0;
+            text-shadow: 
+                0 0 5px #0f0,
+                0 0 10px #0f0;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+
+        .code-input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            padding: 15px 25px;
+            width: 400px;
+            text-align: center;
+            letter-spacing: 2px;
+            box-shadow: 
+                0 0 10px #0f0,
+                inset 0 0 10px rgba(0, 255, 0, 0.1);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .code-input:focus {
+            box-shadow: 
+                0 0 20px #0f0,
+                inset 0 0 15px rgba(0, 255, 0, 0.2);
+            border-color: #0ff;
+        }
+
+        .code-input::placeholder {
+            color: rgba(0, 255, 0, 0.4);
         }
 
         @keyframes glitch {
@@ -73,13 +120,30 @@
             .missions-text {
                 font-size: 60px;
                 letter-spacing: 8px;
+                margin-bottom: 40px;
+            }
+
+            .input-label {
+                font-size: 18px;
+            }
+
+            .code-input {
+                width: 90%;
+                font-size: 16px;
+                padding: 12px 20px;
             }
         }
     </style>
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
-    <div class="missions-text">MISSIONS</div>
+    <div class="content-container">
+        <div class="missions-text">MISSIONS</div>
+        <div class="input-container">
+            <div class="input-label">ENTER CODE</div>
+            <input type="text" class="code-input" placeholder="_ _ _ _ _ _">
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById('matrix-canvas');
