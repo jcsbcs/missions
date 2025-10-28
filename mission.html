@@ -93,18 +93,60 @@
                 0 0 30px #0f0;
             letter-spacing: 3px;
             margin-bottom: 10px;
-            animation: glow 2s ease-in-out infinite;
+            font-family: monospace;
+            position: relative;
         }
 
-        @keyframes glow {
-            0%, 100% { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0; }
-            50% { text-shadow: 0 0 20px #0f0, 0 0 30px #0f0, 0 0 40px #0f0, 0 0 50px #0f0; }
+        .welcome-text::before {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: glitchEffect 2s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            transform: translate(-2px, -2px);
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0, 0 0 15px #0f0;
+        }
+
+        @keyframes glitchEffect {
+            0%, 100% {
+                clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+                transform: translate(0);
+            }
+            33% {
+                clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%);
+                transform: translate(-5px, -5px);
+            }
+            66% {
+                clip-path: polygon(0 85%, 100% 85%, 100% 100%, 0 100%);
+                transform: translate(5px, 5px);
+            }
         }
 
         .agent-name {
             color: #00ff00;
             font-weight: bold;
             text-transform: uppercase;
+            font-family: monospace;
+            position: relative;
+            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
+        }
+
+        .agent-name::before {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: glitchEffect 2s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            transform: translate(-2px, -2px);
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0, 0 0 15px #0f0;
         }
 
         .report-body {
@@ -193,8 +235,8 @@
         </div>
 
         <div class="welcome-section">
-            <div class="welcome-text">WELCOME BACK</div>
-            <div class="welcome-text">AGENT <span class="agent-name" id="agentName">UNKNOWN</span></div>
+            <div class="welcome-text" data-text="WELCOME BACK">WELCOME BACK</div>
+            <div class="welcome-text" data-text="">AGENT <span class="agent-name" id="agentName" data-text="">UNKNOWN</span></div>
         </div>
 
         <div class="report-body">
@@ -260,7 +302,17 @@
         // Get agent name from URL
         const params = new URLSearchParams(window.location.search);
         const agentName = params.get('agent') || 'UNKNOWN';
-        document.getElementById('agentName').textContent = agentName;
+        const agentNameElement = document.getElementById('agentName');
+        agentNameElement.textContent = agentName;
+        agentNameElement.setAttribute('data-text', agentName);
+
+        // Set data-text for welcome text elements
+        const welcomeTexts = document.querySelectorAll('.welcome-text');
+        welcomeTexts.forEach(el => {
+            if (!el.getAttribute('data-text')) {
+                el.setAttribute('data-text', el.textContent.trim());
+            }
+        });
 
         // Set current date
         const now = new Date();
