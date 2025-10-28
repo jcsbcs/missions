@@ -91,6 +91,30 @@
             color: rgba(0, 255, 0, 0.4);
         }
 
+        .submit-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            padding: 12px 40px;
+            margin-top: 20px;
+            cursor: pointer;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px #0f0;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 20px #0f0;
+            transform: scale(1.05);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
         @keyframes glitch {
             0%, 90%, 100% {
                 opacity: 1;
@@ -141,7 +165,9 @@
         <div class="missions-text">MISSIONS</div>
         <div class="input-container">
             <div class="input-label">ENTER CODE</div>
-            <input type="text" class="code-input" placeholder="_ _ _ _ _ _">
+            <input type="text" class="code-input" id="codeInput" placeholder="_ _ _ _ _ _">
+            <br>
+            <button class="submit-btn" onclick="submitCode()">ACCESS</button>
         </div>
     </div>
 
@@ -184,6 +210,21 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+        });
+
+        // Handle code submission
+        function submitCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            if (code) {
+                window.location.href = `mission.html?agent=${encodeURIComponent(code)}`;
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('codeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitCode();
+            }
         });
     </script>
 </body>
