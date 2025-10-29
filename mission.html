@@ -415,15 +415,15 @@
                     if (finalText[i] === ' ') {
                         html += ' ';
                     } else {
-                        html += `<span class="decrypt-char" data-index="${i}">${chars[Math.floor(Math.random() * chars.length)]}</span>`;
+                        html += `<span class="decrypt-char" data-index="${i}" data-final="${finalText[i]}">${chars[Math.floor(Math.random() * chars.length)]}</span>`;
                     }
                 }
                 element.innerHTML = html;
 
                 const spans = element.querySelectorAll('.decrypt-char');
                 
-                spans.forEach((span, index) => {
-                    const finalChar = finalText[index];
+                spans.forEach((span) => {
+                    const finalChar = span.getAttribute('data-final');
                     const decryptDuration = 1500 + Math.random() * 2000;
                     const iterations = 30 + Math.floor(Math.random() * 40);
                     let currentIteration = 0;
