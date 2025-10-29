@@ -247,17 +247,11 @@
             }
             .decrypt-text {
                 font-size: 14px;
-                line-height: 1.9;
+                line-height: 1.7;
             }
             .mission-text {
                 font-size: 16px;
-                line-height: 2;
-            }
-            .decrypt-char {
-                margin: 0 1px;
-            }
-            .mission-text .decrypt-char {
-                margin: 0 2px;
+                line-height: 1.7;
             }
         }
     </style>
@@ -290,10 +284,8 @@
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 40px; color: #555; font-size: 12px;">
-            <p>THIS DOCUMENT IS PROPERTY OF [REDACTED]</p>
-            <p>UNAUTHORIZED ACCESS IS PUNISHABLE BY LAW</p>
-            <p>DOCUMENT ID: MR-<span id="docId"></span></p>
+        <div style="text-align: center; margin-top: 40px; color: #0f0; font-size: 14px; letter-spacing: 2px;">
+            <p>HOOPER™</p>
         </div>
     </div>
 
@@ -314,7 +306,7 @@
 
         // Mission pool with availability counts
         const missionPool = [
-            { text: "Kiss someone in the Photo Booth", count: 1 },
+            { text: "Kiss someone in the photo booth", count: 1 },
             { text: "Make a TikTok with a random", count: 1 },
             { text: "Get a random's number", count: 1 },
             { text: "Steal something while we are out", count: 3 },
@@ -326,7 +318,7 @@
             { text: "Go on a side mission and vlog it", count: 1 },
             { text: "Kidnap a random back to the house", count: 1 },
             { text: "Trade costumes with someone", count: 1 },
-            { text: "Get a piggy back ride", count: 1 },
+            { text: "Get a piggyback ride", count: 1 },
             { text: "Find the person who's hiding", count: 1 },
             { text: "Get as many people as you can in the hot tub", count: 1 },
             { text: "You must volunteer to do the bitch cup after the first game of rage cage", count: 1 },
@@ -456,9 +448,8 @@
             }, 500);
         });
 
-        // Generate random document ID
+        // Generate random document ID (no longer displayed but kept for potential future use)
         const docId = Math.random().toString(36).substr(2, 9).toUpperCase();
-        document.getElementById('docId').textContent = docId;
     </script>
 </body>
 </html>
