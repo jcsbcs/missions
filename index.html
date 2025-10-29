@@ -59,6 +59,7 @@
 
         .input-container {
             margin-top: 40px;
+            position: relative;
         }
 
         .input-label {
@@ -69,6 +70,21 @@
                 0 0 10px #0f0;
             margin-bottom: 15px;
             letter-spacing: 3px;
+        }
+
+        .error-message {
+            color: #f00;
+            font-size: 14px;
+            text-shadow: 0 0 5px #f00;
+            margin-bottom: 10px;
+            min-height: 20px;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
         }
 
         .code-input {
@@ -173,6 +189,7 @@
         <div class="missions-text">MISSIONS</div>
         <div class="input-container">
             <div class="input-label">ENTER CODE</div>
+            <div class="error-message" id="errorMsg">ACCESS DENIED</div>
             <input type="text" class="code-input" id="codeInput" placeholder="_ _ _ _ _ _">
             <br>
             <button class="submit-btn" onclick="submitCode()">ACCESS</button>
