@@ -234,82 +234,70 @@
         padding: 30px;
         position: relative;
         transition: all 0.3s ease;
+        cursor: pointer;
     }
 
-    .mission-choice:hover {
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    .mission-choice.selected {
+        border-color: #0f0;
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        background: rgba(0, 255, 0, 0.05);
+    }
+
+    .mission-choice:hover:not(.selected) {
+        border-color: #555;
         transform: scale(1.02);
     }
 
-    .mission-choice.blue:hover {
-        box-shadow: 0 0 20px rgba(0, 150, 255, 0.4);
+    .accept-btn {
+        display: block;
+        width: 100%;
+        background: rgba(0, 255, 0, 0.1);
+        border: 2px solid #0f0;
+        color: #0f0;
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        padding: 15px;
+        margin-top: 30px;
+        cursor: pointer;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
     }
 
-    .mission-choice.red:hover {
-        box-shadow: 0 0 20px rgba(255, 50, 50, 0.4);
+    .accept-btn:hover {
+        background: rgba(0, 255, 0, 0.2);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        transform: scale(1.05);
+    }
+
+    .accept-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .feedback-message {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 18px;
+        color: #0f0;
+        text-shadow: 0 0 10px #0f0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .feedback-message.show {
+        opacity: 1;
     }
 
     .pill-container {
         width: 120px;
         height: 80px;
         margin: 0 auto 30px;
-        perspective: 1000px;
     }
 
-    .pill {
+    .pill-canvas {
         width: 100%;
         height: 100%;
-        position: relative;
-        transform-style: preserve-3d;
-        animation: rotatePill 4s infinite linear;
-    }
-
-    @keyframes rotatePill {
-        from { transform: rotateX(-15deg) rotateY(0deg); }
-        to { transform: rotateX(-15deg) rotateY(360deg); }
-    }
-
-    .pill-shape {
-        position: absolute;
-        width: 90px;
-        height: 40px;
-        top: 20px;
-        left: 15px;
-        border-radius: 20px;
-        transform-style: preserve-3d;
-        box-shadow: 0 0 30px currentColor;
-    }
-
-    .blue-pill .pill-shape {
-        background: radial-gradient(ellipse at 30% 30%, #6db3ff, #0066ff, #003d99);
-        color: rgba(0, 150, 255, 0.8);
-    }
-
-    .red-pill .pill-shape {
-        background: radial-gradient(ellipse at 30% 30%, #ff6666, #ff0000, #990000);
-        color: rgba(255, 50, 50, 0.8);
-    }
-
-    .pill-grid {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-image: 
-            repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.15) 0px, transparent 1px, transparent 8px),
-            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0px, transparent 1px, transparent 8px);
-        border-radius: inherit;
-        mix-blend-mode: overlay;
-    }
-
-    .pill-shine {
-        position: absolute;
-        width: 60%;
-        height: 60%;
-        top: 10%;
-        left: 15%;
-        background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
-        border-radius: inherit;
-        filter: blur(8px);
     }
 
     .stamp {
@@ -393,38 +381,28 @@
     </div>
 
     <div class="report-body">
-        <div class="section-title" style="text-align: center; margin-bottom: 20px;">Mission Briefing</div>
-        <p class="decrypt-text" style="text-align: center;" id="briefing1"></p>
-        
         <div class="select-mission-title">Select Your Mission</div>
         
         <div class="missions-container">
             <!-- Blue Pill Mission -->
-            <div class="mission-choice blue">
+            <div class="mission-choice blue" id="choice1" onclick="selectMission(1)">
                 <div class="pill-container">
-                    <div class="pill blue-pill">
-                        <div class="pill-shape">
-                            <div class="pill-shine"></div>
-                            <div class="pill-grid"></div>
-                        </div>
-                    </div>
+                    <canvas class="pill-canvas" id="bluePill"></canvas>
                 </div>
                 <p class="decrypt-text mission-text" id="mission1"></p>
             </div>
 
             <!-- Red Pill Mission -->
-            <div class="mission-choice red">
+            <div class="mission-choice red" id="choice2" onclick="selectMission(2)">
                 <div class="pill-container">
-                    <div class="pill red-pill">
-                        <div class="pill-shape">
-                            <div class="pill-shine"></div>
-                            <div class="pill-grid"></div>
-                        </div>
-                    </div>
+                    <canvas class="pill-canvas" id="redPill"></canvas>
                 </div>
                 <p class="decrypt-text mission-text" id="mission2"></p>
             </div>
         </div>
+
+        <button class="accept-btn" id="acceptBtn" onclick="acceptMission()" disabled>Accept Mission</button>
+        <div class="feedback-message" id="feedback"></div>
     </div>
 
     <div style="text-align: center; margin-top: 40px; color: #0f0; font-size: 14px; letter-spacing: 2px;">
@@ -554,10 +532,142 @@
         }
     }
 
+    // Draw 3D pill on canvas
+    function drawPill(canvasId, color) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 120;
+        const h = canvas.height = 80;
+        
+        let rotation = 0;
+        
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            
+            // Pill dimensions
+            const pillWidth = 70;
+            const pillHeight = 30;
+            const radius = pillHeight / 2;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            
+            // Calculate 3D rotation
+            const angle = rotation * Math.PI / 180;
+            
+            // Draw cylinder body with perspective
+            const depth = Math.sin(angle) * radius;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // Main pill shape
+            ctx.beginPath();
+            ctx.ellipse(0, 0, pillWidth / 2, radius, 0, 0, Math.PI * 2);
+            
+            // Color gradient based on rotation
+            const lightness = Math.abs(Math.cos(angle));
+            let gradient;
+            
+            if (color === 'blue') {
+                gradient = ctx.createLinearGradient(0, -radius, 0, radius);
+                gradient.addColorStop(0, `rgb(${85 + lightness * 80}, ${153 + lightness * 50}, 255)`);
+                gradient.addColorStop(0.5, `rgb(0, ${102 + lightness * 50}, 255)`);
+                gradient.addColorStop(1, `rgb(0, 68, ${170 + lightness * 40})`);
+            } else {
+                gradient = ctx.createLinearGradient(0, -radius, 0, radius);
+                gradient.addColorStop(0, `rgb(255, ${85 + lightness * 80}, ${85 + lightness * 80})`);
+                gradient.addColorStop(0.5, `rgb(255, ${lightness * 50}, 0)`);
+                gradient.addColorStop(1, `rgb(${170 + lightness * 40}, 0, 0)`);
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Grid overlay
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 0.5;
+            for (let i = -30; i < 30; i += 5) {
+                ctx.beginPath();
+                ctx.moveTo(-pillWidth / 2, i);
+                ctx.lineTo(pillWidth / 2, i);
+                ctx.stroke();
+            }
+            for (let i = -35; i < 35; i += 5) {
+                ctx.beginPath();
+                ctx.moveTo(i, -radius);
+                ctx.lineTo(i, radius);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+            
+            rotation += 1;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+
+    // Initialize pills
+    drawPill('bluePill', 'blue');
+    drawPill('redPill', 'red');
+
+    // Track selected mission
+    let selectedMission = null;
+    let selectedMissionText = '';
+
+    function selectMission(missionNumber) {
+        // Remove previous selection
+        document.getElementById('choice1').classList.remove('selected');
+        document.getElementById('choice2').classList.remove('selected');
+        
+        // Add selection to clicked mission
+        document.getElementById('choice' + missionNumber).classList.add('selected');
+        
+        // Store selection
+        selectedMission = missionNumber;
+        selectedMissionText = document.getElementById('mission' + missionNumber).textContent;
+        
+        // Enable accept button
+        document.getElementById('acceptBtn').disabled = false;
+        
+        // Clear feedback
+        document.getElementById('feedback').classList.remove('show');
+    }
+
+    async function acceptMission() {
+        if (!selectedMission) return;
+        
+        const feedback = document.getElementById('feedback');
+        const acceptBtn = document.getElementById('acceptBtn');
+        
+        try {
+            // Save the chosen mission to Firebase
+            const agentRef = db.collection('agents').doc(agentName);
+            await agentRef.update({
+                chosenMission: selectedMissionText,
+                chosenAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            feedback.textContent = `Mission accepted! Good luck, Agent ${agentName}.`;
+            feedback.classList.add('show');
+            acceptBtn.disabled = true;
+            acceptBtn.textContent = 'MISSION ACCEPTED';
+            
+            // Disable mission selection
+            document.getElementById('choice1').style.pointerEvents = 'none';
+            document.getElementById('choice2').style.pointerEvents = 'none';
+            
+        } catch (error) {
+            console.error('Error accepting mission:', error);
+            feedback.textContent = 'Error accepting mission. Please try again.';
+            feedback.style.color = '#f00';
+            feedback.classList.add('show');
+        }
+    }
+
     // Mission briefing with assigned missions
     assignMissions().then(missions => {
-        const briefing1 = `AGENT ${agentName.toUpperCase()}, you have been assigned TWO missions. Choose wisely - your choice will define your path.`;
-        
         // Cryptographic decryption effect
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*!?<>[]{}+=';
         
@@ -595,13 +705,10 @@
         }
 
         setTimeout(() => {
-            decryptText(document.getElementById('briefing1'), briefing1);
-            setTimeout(() => {
-                decryptText(document.getElementById('mission1'), missions[0]);
-            }, 500);
+            decryptText(document.getElementById('mission1'), missions[0]);
             setTimeout(() => {
                 decryptText(document.getElementById('mission2'), missions[1]);
-            }, 1000);
+            }, 500);
         }, 500);
     });
 </script>
