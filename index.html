@@ -189,6 +189,7 @@
         <div class="missions-text">MISSIONS</div>
         <div class="input-container">
             <div class="input-label">ENTER CODE</div>
+            <div class="error-message" id="errorMsg">ACCESS DENIED</div>
             <input type="text" class="code-input" id="codeInput" placeholder="_ _ _ _ _ _">
             <br>
             <button class="submit-btn" onclick="submitCode()">ACCESS</button>
@@ -239,8 +240,34 @@
         // Handle code submission
         function submitCode() {
             const code = document.getElementById('codeInput').value.trim();
-            if (code) {
-                window.location.href = `mission.html?agent=${encodeURIComponent(code)}`;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            // Authorized agent names (case-insensitive)
+            const authorizedAgents = [
+                'Zamar', 'Malyssa', 'Kristi', 'Mai', 'Kiwi', 'Jazz', 'Gerardo', 
+                'John', 'Gerona', 'Miles', 'Joseph', 'Mia', 'Mary', 'Brian', 
+                'Jazzy', 'Alejandro', 'Gustavo', 'Jason', 'Elijah', 'Michelle', 
+                'Tirath', 'Avani', 'Liam', 'Olivia', 'vaib', 'sada', 'maxx', 
+                'alyssa', 'Andrew', 'Rafa', 'Johan'
+            ];
+            
+            // Check if code matches any authorized agent (case-insensitive)
+            const isAuthorized = authorizedAgents.some(
+                agent => agent.toLowerCase() === code.toLowerCase()
+            );
+            
+            if (code && isAuthorized) {
+                // Use the properly capitalized version from the list
+                const properName = authorizedAgents.find(
+                    agent => agent.toLowerCase() === code.toLowerCase()
+                );
+                window.location.href = `mission.html?agent=${encodeURIComponent(properName)}`;
+            } else {
+                // Show access denied message
+                errorMsg.classList.add('show');
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 2000);
             }
         }
 
