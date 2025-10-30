@@ -120,4 +120,380 @@
                 <!-- Red Pill Mission -->
                 <div class="mission-choice red" id="choice2" onclick="selectMission(2)">
                     <div class="pill-container">
-                        <canvas class="pill-canvas" id="redPill"
+                        <canvas class="pill-canvas" id="redPill" width="240" height="100"></canvas>
+                    </div>
+                    <p class="decrypt-text mission-text" id="mission2"></p>
+                </div>
+            </div>
+
+            <button class="accept-btn" id="acceptBtn" onclick="acceptMission()" disabled>Accept Mission</button>
+            <div class="feedback-message" id="feedback"></div>
+        </div>
+
+        <div style="text-align:center; margin-top:40px; color:#0f0; font-size:14px; letter-spacing:2px;">
+            <p>HOOPER™</p>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Firebase (compat) - uses your original config but ensures storage bucket is .appspot.com
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGDDZS4X7V8m6h_L4__GxtITHiwyyQ2LQ",
+            authDomain: "missions-7a024.firebaseapp.com",
+            projectId: "missions-7a024",
+            storageBucket: "missions-7a024.appspot.com",
+            messagingSenderId: "907803260147",
+            appId: "1:907803260147:web:023fd43873947ce21c3386",
+            measurementId: "G-P6VHBK3D3L"
+        };
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (e) {
+            // ignore if already initialized in dev hot reload
+        }
+        const db = firebase.firestore();
+
+        // Robust agent detection: ?agent= or ?Agent= or sessionStorage
+        const params = new URLSearchParams(window.location.search);
+        let agentName = params.get('agent') || params.get('Agent') || sessionStorage.getItem('agent') || 'UNKNOWN';
+        // store agent in sessionStorage (so mission_accepted can reload it if param lost)
+        if (agentName && agentName !== 'UNKNOWN') sessionStorage.setItem('agent', agentName);
+
+        const agentNameElement = document.getElementById('agentName');
+        agentNameElement.textContent = agentName;
+        agentNameElement.setAttribute('data-text', agentName);
+
+        // Mission pool (same as you provided)
+        const missionPool = [
+            { text: "Kiss someone in the photo booth", count: 2 },
+            { text: "Make a TikTok with a random", count: 2 },
+            { text: "Get a random's number", count: 2 },
+            { text: "Steal something while we are out", count: 6 },
+            { text: "Jump in the ocean at night (naked?)", count: 2 },
+            { text: "Get everyone to do a conga line", count: 6 },
+            { text: "Do NOT let a conga line happen", count: 4 },
+            { text: "Pour everyone fake shots and cheers", count: 2 },
+            { text: "Give a cheers speech", count: 2 },
+            { text: "Go on a side mission and vlog it", count: 2 },
+            { text: "Kidnap a random back to the house", count: 2 },
+            { text: "Trade costumes with someone", count: 2 },
+            { text: "Get a piggyback ride", count: 2 },
+            { text: "Find the person who's hiding", count: 2 },
+            { text: "Get as many people as you can in the hot tub", count: 2 },
+            { text: "You must volunteer to do the bitch cup after the first game of rage cage", count: 2 },
+            { text: "Get someone to feed you your shots for the night", count: 2 },
+            { text: "Vlog the whole night", count: 2 },
+            { text: "Start a limbo line", count: 2 },
+            { text: "Take a body shot off of someone", count: 2 },
+            { text: "Give a body shot", count: 2 },
+            { text: "Interview a stranger", count: 2 }
+        ];
+
+        // simple shuffle
+        function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // Assign two distinct missions using transaction
+        async function assignMissions() {
+            try {
+                const agentRef = db.collection('agents').doc(agentName);
+                const assignmentsRef = db.collection('system').doc('assignments');
+
+                // If agent has missions already, return them
+                const agentDoc = await agentRef.get();
+                if (agentDoc.exists) {
+                    const data = agentDoc.data();
+                    if (data.missions && Array.isArray(data.missions) && data.missions.length >= 2) {
+                        return data.missions.slice(0,2);
+                    }
+                }
+
+                // transaction to allocate
+                return await db.runTransaction(async (tx) => {
+                    const assignmentsDoc = await tx.get(assignmentsRef);
+                    let assignments = {};
+                    if (assignmentsDoc.exists) assignments = assignmentsDoc.data();
+
+                    // build available array with repeats per remaining count
+                    const available = [];
+                    missionPool.forEach((m, idx) => {
+                        const assigned = assignments[idx] || 0;
+                        const remaining = Math.max(0, m.count - assigned);
+                        for (let i = 0; i < remaining; i++) {
+                            available.push({ index: idx, text: m.text });
+                        }
+                    });
+
+                    if (available.length < 2) {
+                        return ["All missions have been assigned.", "Contact mission control for further instructions."];
+                    }
+
+                    // shuffle and pick two with different index
+                    shuffle(available);
+                    const first = available[0];
+                    let second = null;
+                    for (let i = 1; i < available.length; i++) {
+                        if (available[i].index !== first.index) {
+                            second = available[i];
+                            break;
+                        }
+                    }
+                    if (!second) {
+                        // fallback
+                        return ["Unable to allocate two distinct missions.", "Contact mission control."];
+                    }
+
+                    assignments[first.index] = (assignments[first.index] || 0) + 1;
+                    assignments[second.index] = (assignments[second.index] || 0) + 1;
+
+                    const missions = [first.text, second.text];
+
+                    tx.set(assignmentsRef, assignments);
+                    tx.set(agentRef, { missions: missions, assignedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+                    return missions;
+                });
+            } catch (err) {
+                console.error("assignMissions error:", err);
+                return ["Error connecting to mission control.", "Please try again."];
+            }
+        }
+
+        // High-DPI aware continuous rotating pill renderer (3D-ish)
+        function drawPill(canvasId, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // keep CSS sizes
+            const cssW = canvas.width;
+            const cssH = canvas.height;
+            const DPR = window.devicePixelRatio || 1;
+            canvas.width = cssW * DPR;
+            canvas.height = cssH * DPR;
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+            let angle = 0;
+
+            function frame() {
+                const w = cssW;
+                const h = cssH;
+                ctx.clearRect(0,0,w,h);
+                const cx = w/2, cy = h/2;
+                const pillW = Math.min(180, w * 0.78);
+                const pillH = Math.min(36, h * 0.45);
+                // compress factor varies with angle -> gives spinning illusion
+                const compress = 0.45 + 0.55 * (0.5 + 0.5 * Math.cos(angle));
+                const ellW = (pillW/2) * compress;
+                const ellH = pillH/2;
+
+                // shadow below
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + pillH + 6, pillW * 0.45, 8, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+
+                // gradient that shifts with angle to simulate light
+                const shift = Math.cos(angle) * pillW * 0.22;
+                let g = ctx.createLinearGradient(cx - pillW/2 + shift, 0, cx + pillW/2 + shift, 0);
+                if (color === 'blue') {
+                    g.addColorStop(0, 'rgb(10,30,100)');
+                    g.addColorStop(0.45, 'rgb(0,150,200)');
+                    g.addColorStop(1, 'rgb(30,80,200)');
+                } else {
+                    g.addColorStop(0, 'rgb(120,10,10)');
+                    g.addColorStop(0.45, 'rgb(220,40,40)');
+                    g.addColorStop(1, 'rgb(200,80,80)');
+                }
+
+                // capsule path (rounded pill)
+                ctx.save();
+                ctx.beginPath();
+                // left arc
+                ctx.ellipse(cx - (pillW/2 - ellH), cy, ellW, ellH, 0, Math.PI/2, Math.PI*1.5);
+                // right arc
+                ctx.ellipse(cx + (pillW/2 - ellH), cy, ellW, ellH, 0, Math.PI*1.5, Math.PI/2);
+                // middle rectangle
+                ctx.moveTo(cx - (pillW/2 - ellH), cy - ellH);
+                ctx.lineTo(cx + (pillW/2 - ellH), cy - ellH);
+                ctx.lineTo(cx + (pillW/2 - ellH), cy + ellH);
+                ctx.lineTo(cx - (pillW/2 - ellH), cy + ellH);
+                ctx.closePath();
+
+                ctx.fillStyle = g;
+                ctx.fill();
+                ctx.restore();
+
+                // faint vertical grid / wrap lines for cylindrical feel
+                ctx.save();
+                ctx.globalAlpha = 0.08;
+                ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                ctx.lineWidth = 1;
+                for (let x = -pillW/2 + 6; x <= pillW/2 - 6; x += 6) {
+                    ctx.beginPath();
+                    const px = cx + x;
+                    const amp = Math.cos((x / pillW) * Math.PI) * ellH * 0.92;
+                    ctx.moveTo(px, cy - amp);
+                    ctx.lineTo(px, cy + amp);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // outer rim
+                ctx.save();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, ellW, ellH, 0, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.restore();
+
+                // subtle glow
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, ellW + pillH*0.6, ellH + pillH*0.6, 0, 0, Math.PI*2);
+                ctx.fillStyle = (color === 'blue') ? 'rgba(0,160,255,0.03)' : 'rgba(255,50,50,0.03)';
+                ctx.fill();
+                ctx.restore();
+
+                angle += 0.02;
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+
+        // setup UI vars
+        let selectedMissionIndex = null;
+        let selectedMissionText = '';
+
+        window.selectMission = function(missionNumber) {
+            document.getElementById('choice1').classList.remove('selected');
+            document.getElementById('choice2').classList.remove('selected');
+            document.getElementById('choice' + missionNumber).classList.add('selected');
+
+            selectedMissionIndex = missionNumber;
+            selectedMissionText = document.getElementById('mission' + missionNumber).textContent || '';
+            document.getElementById('acceptBtn').disabled = false;
+            document.getElementById('feedback').classList.remove('show');
+        };
+
+        window.acceptMission = async function() {
+            if (!selectedMissionText) return;
+            const feedback = document.getElementById('feedback');
+            const acceptBtn = document.getElementById('acceptBtn');
+            try {
+                const agentRef = db.collection('agents').doc(agentName);
+                // use merge to avoid overwriting
+                await agentRef.set({
+                    chosenMission: selectedMissionText,
+                    chosenAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                feedback.style.color = '#0f0';
+                feedback.textContent = `Mission accepted! Good luck, Agent ${agentName}.`;
+                feedback.classList.add('show');
+
+                acceptBtn.disabled = true;
+                acceptBtn.textContent = 'MISSION ACCEPTED';
+                document.getElementById('choice1').style.pointerEvents = 'none';
+                document.getElementById('choice2').style.pointerEvents = 'none';
+
+                // brief pause then redirect
+                setTimeout(() => {
+                    // preserve agent param via sessionStorage as well
+                    sessionStorage.setItem('agent', agentName);
+                    window.location.href = `mission_accepted.html?agent=${encodeURIComponent(agentName)}`;
+                }, 600);
+            } catch (err) {
+                console.error('Error saving chosen mission:', err);
+                feedback.style.color = '#f00';
+                feedback.textContent = 'Error accepting mission. Please try again.';
+                feedback.classList.add('show');
+            }
+        };
+
+        // decrypt effect (same as your original)
+        function decryptText(element, finalText) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*!?<>[]{}+=';
+            let html = '';
+            for (let i = 0; i < finalText.length; i++) {
+                if (finalText[i] === ' ') html += ' ';
+                else html += `<span class="decrypt-char" data-index="${i}" data-final="${finalText[i]}">${chars[Math.floor(Math.random() * chars.length)]}</span>`;
+            }
+            element.innerHTML = html;
+            const spans = element.querySelectorAll('.decrypt-char');
+            spans.forEach((span) => {
+                const finalChar = span.getAttribute('data-final');
+                const decryptDuration = 1000 + Math.random() * 1500;
+                const iterations = 20 + Math.floor(Math.random() * 30);
+                let current = 0;
+                const interval = setInterval(() => {
+                    if (current < iterations) {
+                        span.textContent = chars[Math.floor(Math.random() * chars.length)];
+                        span.style.textShadow = '0 0 8px #0f0';
+                        current++;
+                    } else {
+                        clearInterval(interval);
+                        span.textContent = finalChar;
+                        span.style.textShadow = '0 0 5px #0f0';
+                    }
+                }, decryptDuration / iterations);
+            });
+        }
+
+        // draw pills now that DOM ready
+        drawPill('bluePill', 'blue');
+        drawPill('redPill', 'red');
+
+        // load missions and populate UI
+        assignMissions().then(missions => {
+            const m1 = document.getElementById('mission1');
+            const m2 = document.getElementById('mission2');
+            setTimeout(() => decryptText(m1, missions[0] || ''), 400);
+            setTimeout(() => decryptText(m2, missions[1] || ''), 900);
+
+            // restore chosenMission if exists (so page shows accepted state)
+            db.collection('agents').doc(agentName).get().then(docSnap => {
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    if (data.chosenMission) {
+                        const feedback = document.getElementById('feedback');
+                        feedback.style.color = '#0f0';
+                        feedback.textContent = `Mission already accepted: "${data.chosenMission}"`;
+                        feedback.classList.add('show');
+                        document.getElementById('acceptBtn').disabled = true;
+                        document.getElementById('acceptBtn').textContent = 'MISSION ACCEPTED';
+                        document.getElementById('choice1').style.pointerEvents = 'none';
+                        document.getElementById('choice2').style.pointerEvents = 'none';
+                        // visually mark the one matching (if any)
+                        setTimeout(() => {
+                            if (data.chosenMission === missions[0]) document.getElementById('choice1').classList.add('selected');
+                            else if (data.chosenMission === missions[1]) document.getElementById('choice2').classList.add('selected');
+                        }, 700);
+                    }
+                }
+            }).catch(err => console.warn('Agent restore check failed', err));
+        }).catch(err => {
+            console.error('assignMissions failed:', err);
+            const fb = document.getElementById('feedback');
+            fb.style.color = '#f00';
+            fb.textContent = 'Failed to load missions. Check console for details.';
+            fb.classList.add('show');
+        });
+
+    }); // DOMContentLoaded end
+    </script>
+</body>
+</html>
