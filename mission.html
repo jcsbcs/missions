@@ -657,8 +657,18 @@
         // Track selected mission
         let selectedMission = null;
         let selectedMissionText = '';
+        let missionAlreadyAccepted = false;
 
         function selectMission(missionNumber) {
+            // Don't allow selection if already accepted
+            if (missionAlreadyAccepted) {
+                const feedback = document.getElementById('feedback');
+                feedback.textContent = 'You have already accepted a mission!';
+                feedback.style.color = '#ff0';
+                feedback.classList.add('show');
+                return;
+            }
+            
             // Remove previous selection
             document.getElementById('choice1').classList.remove('selected');
             document.getElementById('choice2').classList.remove('selected');
@@ -678,9 +688,10 @@
         }
 
         async function acceptMission() {
-            if (!selectedMission) return;
+            if (!selectedMission || missionAlreadyAccepted) return;
             
             const feedback = document.getElementById('feedback');
+            const acceptBtn = document.getElementById('acceptBtn');
             
             try {
                 // Save the chosen mission to Firebase using set with merge
@@ -690,6 +701,9 @@
                     chosenMission: selectedMissionText,
                     chosenAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
+                
+                // Mark as accepted
+                missionAlreadyAccepted = true;
                 
                 // Redirect to final mission page
                 window.location.href = `final-mission.html?agent=${encodeURIComponent(agentName)}&mission=${encodeURIComponent(selectedMissionText)}`;
@@ -701,6 +715,28 @@
                 feedback.classList.add('show');
             }
         }
+
+        // Check if user already accepted a mission
+        async function checkExistingChoice() {
+            try {
+                const agentRef = db.collection('agents').doc(agentName);
+                const agentDoc = await agentRef.get();
+                
+                if (agentDoc.exists && agentDoc.data().chosenMission) {
+                    // User already chose - redirect them
+                    const chosenMission = agentDoc.data().chosenMission;
+                    missionAlreadyAccepted = true;
+                    
+                    // Redirect to their mission
+                    window.location.href = `final-mission.html?agent=${encodeURIComponent(agentName)}&mission=${encodeURIComponent(chosenMission)}`;
+                }
+            } catch (error) {
+                console.error('Error checking existing choice:', error);
+            }
+        }
+
+        // Check on page load
+        checkExistingChoice();
 
         // Mission assignment and display
         assignMissions().then(missions => {
