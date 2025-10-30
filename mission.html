@@ -1,718 +1,117 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mission Report - Classified</title>
-    <style>
-        html {
-            background: #000;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mission Briefing</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
 
-```
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        background: #000;
-        color: #d4d4d4;
-        font-family: 'Courier New', monospace;
-        overflow-x: hidden;
-        padding: 20px;
-    }
-
-    .scanlines {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.15),
-            rgba(0, 0, 0, 0.15) 1px,
-            transparent 1px,
-            transparent 2px
-        );
-        pointer-events: none;
-        z-index: 1000;
-    }
-
-    .container {
-        max-width: 900px;
-        margin: 0 auto;
-        position: relative;
-        z-index: 1;
-    }
-
-    .classified-header {
-        text-align: center;
-        border: 3px solid #c41e3a;
-        background: rgba(196, 30, 58, 0.1);
-        padding: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 0 20px rgba(196, 30, 58, 0.3);
-    }
-
-    .classified-text {
-        color: #c41e3a;
-        font-size: 32px;
-        font-weight: bold;
-        letter-spacing: 8px;
-        text-shadow: 0 0 10px rgba(196, 30, 58, 0.5);
-    }
-
-    .security-level {
-        color: #ff6b6b;
-        font-size: 14px;
-        margin-top: 10px;
-        letter-spacing: 3px;
-    }
-
-    .welcome-section {
-        background: rgba(0, 255, 0, 0.05);
-        border: 2px solid #0f0;
-        padding: 40px;
-        margin: 40px 0;
-        text-align: center;
-        box-shadow: 
-            0 0 30px rgba(0, 255, 0, 0.2),
-            inset 0 0 30px rgba(0, 255, 0, 0.05);
-        animation: fadeIn 1s ease-in;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .welcome-text {
-        font-size: 42px;
-        color: #0f0;
-        text-shadow: 
-            0 0 10px #0f0,
-            0 0 20px #0f0,
-            0 0 30px #0f0;
-        letter-spacing: 3px;
-        margin-bottom: 10px;
-        font-family: monospace;
-        position: relative;
-    }
-
-    .welcome-text::before {
-        content: attr(data-text);
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        animation: glitchEffect 2s infinite;
-        clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-        transform: translate(-2px, -2px);
-        color: #0f0;
-        text-shadow: 0 0 5px #0f0, 0 0 15px #0f0;
-    }
-
-    @keyframes glitchEffect {
-        0%, 100% {
-            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-            transform: translate(0);
-        }
-        33% {
-            clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%);
-            transform: translate(-5px, -5px);
-        }
-        66% {
-            clip-path: polygon(0 85%, 100% 85%, 100% 100%, 0 100%);
-            transform: translate(5px, 5px);
-        }
-    }
-
-    .agent-name {
-        color: #00ff00;
-        font-weight: bold;
-        text-transform: uppercase;
-        font-family: monospace;
-        position: relative;
-        text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
-    }
-
-    .agent-name::before {
-        content: attr(data-text);
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        animation: glitchEffect 2s infinite;
-        clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-        transform: translate(-2px, -2px);
-        color: #0f0;
-        text-shadow: 0 0 5px #0f0, 0 0 15px #0f0;
-    }
-
-    .report-body {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid #333;
-        padding: 30px;
-        margin: 20px 0;
-    }
-
-    .section-title {
-        color: #0f0;
-        font-size: 20px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        margin-bottom: 15px;
-        text-transform: uppercase;
-    }
-
-    .decrypt-text {
-        line-height: 1.8;
-        margin-top: 20px;
-        color: #0f0;
-        font-family: 'Courier New', monospace;
-        font-size: 16px;
-    }
-
-    .decrypt-char {
-        display: inline;
-        color: #0f0;
-    }
-
-    .mission-text {
-        font-size: 18px;
-        font-weight: bold;
-        margin-top: 30px;
-        line-height: 1.8;
-        letter-spacing: 0.5px;
-    }
-
-    .select-mission-title {
-        text-align: center;
-        font-size: 32px;
-        font-weight: bold;
-        color: #0f0;
-        text-shadow: 
-            0 0 10px #0f0,
-            0 0 20px #0f0,
-            0 0 30px #0f0;
-        letter-spacing: 4px;
-        margin-bottom: 40px;
-        text-transform: uppercase;
-        font-family: 'Courier New', monospace;
-        animation: pulseGlow 2s ease-in-out infinite;
-    }
-
-    @keyframes pulseGlow {
-        0%, 100% { 
-            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
-            opacity: 1;
-        }
-        50% { 
-            text-shadow: 0 0 15px #0f0, 0 0 30px #0f0, 0 0 45px #0f0, 0 0 60px #0f0;
-            opacity: 0.9;
-        }
-    }
-
-    .missions-container {
-        display: flex;
-        gap: 30px;
-        justify-content: center;
-        margin-top: 40px;
-    }
-
-    .mission-choice {
-        flex: 1;
-        max-width: 400px;
-        background: rgba(255, 255, 255, 0.02);
-        border: 2px solid #333;
-        padding: 30px;
-        position: relative;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .mission-choice.selected {
-        border-color: #0f0;
-        box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
-        background: rgba(0, 255, 0, 0.05);
-    }
-
-    .mission-choice:hover:not(.selected) {
-        border-color: #555;
-        transform: scale(1.02);
-    }
-
-    .accept-btn {
-        display: block;
-        width: 100%;
-        background: rgba(0, 255, 0, 0.1);
-        border: 2px solid #0f0;
-        color: #0f0;
-        font-family: 'Courier New', monospace;
-        font-size: 18px;
-        padding: 15px;
-        margin-top: 30px;
-        cursor: pointer;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        transition: all 0.3s ease;
-    }
-
-    .accept-btn:hover {
-        background: rgba(0, 255, 0, 0.2);
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        transform: scale(1.05);
-    }
-
-    .accept-btn:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-    }
-
-    .feedback-message {
-        text-align: center;
-        margin-top: 20px;
-        font-size: 18px;
-        color: #0f0;
-        text-shadow: 0 0 10px #0f0;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .feedback-message.show {
-        opacity: 1;
-    }
-
-    .pill-container {
-        width: 120px;
-        height: 80px;
-        margin: 0 auto 30px;
-    }
-
-    .pill-canvas {
-        width: 100%;
-        height: 100%;
-    }
-
-    .stamp {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        color: #c41e3a;
-        font-size: 48px;
-        font-weight: bold;
-        opacity: 0.3;
-        transform: rotate(-15deg);
-        border: 5px solid #c41e3a;
-        padding: 10px 30px;
-        letter-spacing: 5px;
-    }
-
-    @media (max-width: 768px) {
-        .welcome-text {
-            font-size: 28px;
-        }
-        .classified-text {
-            font-size: 24px;
-        }
-        .stamp {
-            font-size: 32px;
-            padding: 5px 15px;
-        }
-        .decrypt-text {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .mission-text {
-            font-size: 16px;
-            line-height: 1.7;
-        }
-        .missions-container {
-            flex-direction: column;
-            gap: 20px;
-        }
-        .mission-choice {
-            max-width: 100%;
-        }
-        .select-mission-title {
-            font-size: 24px;
-            margin-bottom: 30px;
-        }
-        .pill-container {
-            width: 100px;
-            height: 60px;
-        }
-        .pill-shape {
-            width: 70px;
-            height: 30px;
-            left: 15px;
-            top: 15px;
-        }
-    }
+<style>
+  body {
+    background: black;
+    color: #00ffea;
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    text-align: center;
+  }
+  .scanlines::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.2) 0,
+      rgba(0, 0, 0, 0.2) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    animation: flicker 2s infinite;
+  }
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+    20%, 24%, 55% { opacity: 0.8; }
+  }
+  h1 {
+    color: #ff0044;
+    text-shadow: 0 0 20px #ff0044;
+  }
+  .pill-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+    margin-top: 60px;
+  }
+  canvas {
+    cursor: pointer;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255,255,255,0.2);
+  }
+  .mission-text {
+    margin-top: 20px;
+    max-width: 400px;
+    font-size: 1.1rem;
+    text-shadow: 0 0 8px #00ffff;
+  }
+  #acceptBtn {
+    margin-top: 40px;
+    background: none;
+    border: 2px solid #00ffea;
+    color: #00ffea;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #acceptBtn:hover {
+    background: #00ffea;
+    color: black;
+  }
+  #feedback {
+    margin-top: 30px;
+    font-size: 1.2rem;
+    color: #00ffea;
+  }
 </style>
-```
-
 </head>
-<body>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-```
-<div class="scanlines"></div>
+<body class="scanlines">
+<h1>Mission Briefing</h1>
 
-<div class="container">
-    <div class="stamp">TOP SECRET</div>
-    
-    <div class="classified-header">
-        <div class="classified-text">CLASSIFIED</div>
-        <div class="security-level">SECURITY CLEARANCE: LEVEL 5 REQUIRED</div>
-    </div>
-
-    <div class="welcome-section">
-        <div class="welcome-text" data-text="WELCOME BACK">WELCOME BACK</div>
-        <div class="welcome-text" data-text="">AGENT <span class="agent-name" id="agentName" data-text="">UNKNOWN</span></div>
-    </div>
-
-    <div class="report-body">
-        <div class="select-mission-title">Select Your Mission</div>
-        
-        <div class="missions-container">
-            <!-- Blue Pill Mission -->
-            <div class="mission-choice blue" id="choice1" onclick="selectMission(1)">
-                <div class="pill-container">
-                    <canvas class="pill-canvas" id="bluePill"></canvas>
-                </div>
-                <p class="decrypt-text mission-text" id="mission1"></p>
-            </div>
-
-            <!-- Red Pill Mission -->
-            <div class="mission-choice red" id="choice2" onclick="selectMission(2)">
-                <div class="pill-container">
-                    <canvas class="pill-canvas" id="redPill"></canvas>
-                </div>
-                <p class="decrypt-text mission-text" id="mission2"></p>
-            </div>
-        </div>
-
-        <button class="accept-btn" id="acceptBtn" onclick="acceptMission()" disabled>Accept Mission</button>
-        <div class="feedback-message" id="feedback"></div>
-    </div>
-
-    <div style="text-align: center; margin-top: 40px; color: #0f0; font-size: 14px; letter-spacing: 2px;">
-        <p>HOOPER™</p>
-    </div>
+<div class="pill-container">
+  <div>
+    <canvas id="bluePill" width="200" height="80"></canvas>
+    <div class="mission-text" id="mission1"></div>
+  </div>
+  <div>
+    <canvas id="redPill" width="200" height="80"></canvas>
+    <div class="mission-text" id="mission2"></div>
+  </div>
 </div>
 
-<script>
-    // Initialize Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyAGDDZS4X7V8m6h_L4__GxtITHiwyyQ2LQ",
-        authDomain: "missions-7a024.firebaseapp.com",
-        projectId: "missions-7a024",
-        storageBucket: "missions-7a024.firebasestorage.app",
-        messagingSenderId: "907803260147",
-        appId: "1:907803260147:web:023fd43873947ce21c3386",
-        measurementId: "G-P6VHBK3D3L"
-    };
+<button id="acceptBtn" disabled>Accept Mission</button>
+<div id="feedback"></div>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Mission pool with availability counts (DOUBLED)
-    const missionPool = [
-        { text: "Kiss someone in the photo booth", count: 2 },
-        { text: "Make a TikTok with a random", count: 2 },
-        { text: "Get a random's number", count: 2 },
-        { text: "Steal something while we are out", count: 6 },
-        { text: "Jump in the ocean at night (naked?)", count: 2 },
-        { text: "Get everyone to do a conga line", count: 6 },
-        { text: "Do NOT let a conga line happen", count: 4 },
-        { text: "Pour everyone fake shots and cheers", count: 2 },
-        { text: "Give a cheers speech", count: 2 },
-        { text: "Go on a side mission and vlog it", count: 2 },
-        { text: "Kidnap a random back to the house", count: 2 },
-        { text: "Trade costumes with someone", count: 2 },
-        { text: "Get a piggyback ride", count: 2 },
-        { text: "Find the person who's hiding", count: 2 },
-        { text: "Get as many people as you can in the hot tub", count: 2 },
-        { text: "You must volunteer to do the bitch cup after the first game of rage cage", count: 2 },
-        { text: "Get someone to feed you your shots for the night", count: 2 },
-        { text: "Vlog the whole night", count: 2 },
-        { text: "Start a limbo line", count: 2 },
-        { text: "Take a body shot off of someone", count: 2 },
-        { text: "Give a body shot", count: 2 },
-        { text: "Interview a stranger", count: 2 }
-    ];
+  // Firebase setup
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1b-lWnAfqVWxscg-AhIhOjI8vU2J-REo",
+    authDomain: "missions-7a024.firebaseapp.com",
+    projectId: "missions-7a024",
+    storageBucket: "missions-7a024.appspot.com",
+    messagingSenderId: "262943775673",
+    appId: "1:262943775673:web:ef5dd7bc1ce7690a1f6b8e"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // Get agent name from URL
-    const params = new URLSearchParams(window.location.search);
-    const agentName = params.get('agent') || 'UNKNOWN';
-    const agentNameElement = document.getElementById('agentName');
-    agentNameElement.textContent = agentName;
-    agentNameElement.setAttribute('data-text', agentName);
-
-    // Set data-text for welcome text elements
-    const welcomeTexts = document.querySelectorAll('.welcome-text');
-    welcomeTexts.forEach(el => {
-        if (!el.getAttribute('data-text')) {
-            el.setAttribute('data-text', el.textContent.trim());
-        }
-    });
-
-    // Firebase-based mission assignment - assigns 2 different missions
-    async function assignMissions() {
-        try {
-            const agentRef = db.collection('agents').doc(agentName);
-            const assignmentsRef = db.collection('system').doc('assignments');
-
-            // Check if agent already has missions
-            const agentDoc = await agentRef.get();
-            if (agentDoc.exists) {
-                return agentDoc.data().missions;
-            }
-
-            // Use Firestore transaction to prevent race conditions
-            return await db.runTransaction(async (transaction) => {
-                const assignmentsDoc = await transaction.get(assignmentsRef);
-                
-                let assignments = {};
-                if (assignmentsDoc.exists) {
-                    assignments = assignmentsDoc.data();
-                }
-
-                // Build available missions list
-                const availableMissions = [];
-                missionPool.forEach((mission, index) => {
-                    const assigned = assignments[index] || 0;
-                    const remaining = mission.count - assigned;
-                    for (let i = 0; i < remaining; i++) {
-                        availableMissions.push({ text: mission.text, index: index });
-                    }
-                });
-
-                if (availableMissions.length < 2) {
-                    return ["All missions have been assigned.", "Contact mission control for further instructions."];
-                }
-
-                // Randomly select 2 different missions
-                const selected1 = availableMissions[Math.floor(Math.random() * availableMissions.length)];
-                
-                // Remove selected mission from available pool
-                const remainingMissions = availableMissions.filter((m, i) => 
-                    !(m.index === selected1.index && availableMissions.indexOf(m) === availableMissions.indexOf(selected1))
-                );
-                
-                const selected2 = remainingMissions[Math.floor(Math.random() * remainingMissions.length)];
-                
-                // Update assignments
-                assignments[selected1.index] = (assignments[selected1.index] || 0) + 1;
-                assignments[selected2.index] = (assignments[selected2.index] || 0) + 1;
-                
-                const missions = [selected1.text, selected2.text];
-                
-                // Save to Firestore
-                transaction.set(assignmentsRef, assignments);
-                transaction.set(agentRef, {
-                    missions: missions,
-                    assignedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                return missions;
-            });
-        } catch (error) {
-            console.error('Firebase error:', error);
-            return ["Error connecting to mission control.", "Please try again."];
-        }
-    }
-
-    // Draw 3D pill on canvas
-    function drawPill(canvasId, color) {
-        const canvas = document.getElementById(canvasId);
-        const ctx = canvas.getContext('2d');
-        const w = canvas.width = 120;
-        const h = canvas.height = 80;
-        
-        let rotation = 0;
-        
-        function animate() {
-            ctx.clearRect(0, 0, w, h);
-            
-            // Pill dimensions
-            const pillWidth = 70;
-            const pillHeight = 30;
-            const radius = pillHeight / 2;
-            const centerX = w / 2;
-            const centerY = h / 2;
-            
-            // Calculate 3D rotation
-            const angle = rotation * Math.PI / 180;
-            
-            // Draw cylinder body with perspective
-            const depth = Math.sin(angle) * radius;
-            
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            
-            // Main pill shape
-            ctx.beginPath();
-            ctx.ellipse(0, 0, pillWidth / 2, radius, 0, 0, Math.PI * 2);
-            
-            // Color gradient based on rotation
-            const lightness = Math.abs(Math.cos(angle));
-            let gradient;
-            
-            if (color === 'blue') {
-                gradient = ctx.createLinearGradient(0, -radius, 0, radius);
-                gradient.addColorStop(0, `rgb(${85 + lightness * 80}, ${153 + lightness * 50}, 255)`);
-                gradient.addColorStop(0.5, `rgb(0, ${102 + lightness * 50}, 255)`);
-                gradient.addColorStop(1, `rgb(0, 68, ${170 + lightness * 40})`);
-            } else {
-                gradient = ctx.createLinearGradient(0, -radius, 0, radius);
-                gradient.addColorStop(0, `rgb(255, ${85 + lightness * 80}, ${85 + lightness * 80})`);
-                gradient.addColorStop(0.5, `rgb(255, ${lightness * 50}, 0)`);
-                gradient.addColorStop(1, `rgb(${170 + lightness * 40}, 0, 0)`);
-            }
-            
-            ctx.fillStyle = gradient;
-            ctx.fill();
-            
-            // Grid overlay
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 0.5;
-            for (let i = -30; i < 30; i += 5) {
-                ctx.beginPath();
-                ctx.moveTo(-pillWidth / 2, i);
-                ctx.lineTo(pillWidth / 2, i);
-                ctx.stroke();
-            }
-            for (let i = -35; i < 35; i += 5) {
-                ctx.beginPath();
-                ctx.moveTo(i, -radius);
-                ctx.lineTo(i, radius);
-                ctx.stroke();
-            }
-            
-            ctx.restore();
-            
-            rotation += 1;
-            requestAnimationFrame(animate);
-        }
-        
-        animate();
-    }
-
-    // Initialize pills
-    drawPill('bluePill', 'blue');
-    drawPill('redPill', 'red');
-
-    // Track selected mission
-    let selectedMission = null;
-    let selectedMissionText = '';
-
-    function selectMission(missionNumber) {
-        // Remove previous selection
-        document.getElementById('choice1').classList.remove('selected');
-        document.getElementById('choice2').classList.remove('selected');
-        
-        // Add selection to clicked mission
-        document.getElementById('choice' + missionNumber).classList.add('selected');
-        
-        // Store selection
-        selectedMission = missionNumber;
-        selectedMissionText = document.getElementById('mission' + missionNumber).textContent;
-        
-        // Enable accept button
-        document.getElementById('acceptBtn').disabled = false;
-        
-        // Clear feedback
-        document.getElementById('feedback').classList.remove('show');
-    }
-
-    async function acceptMission() {
-        if (!selectedMission) return;
-        
-        const feedback = document.getElementById('feedback');
-        const acceptBtn = document.getElementById('acceptBtn');
-        
-        try {
-            // Save the chosen mission to Firebase
-            const agentRef = db.collection('agents').doc(agentName);
-            await agentRef.update({
-                chosenMission: selectedMissionText,
-                chosenAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            feedback.textContent = `Mission accepted! Good luck, Agent ${agentName}.`;
-            feedback.classList.add('show');
-            acceptBtn.disabled = true;
-            acceptBtn.textContent = 'MISSION ACCEPTED';
-            
-            // Disable mission selection
-            document.getElementById('choice1').style.pointerEvents = 'none';
-            document.getElementById('choice2').style.pointerEvents = 'none';
-            
-        } catch (error) {
-            console.error('Error accepting mission:', error);
-            feedback.textContent = 'Error accepting mission. Please try again.';
-            feedback.style.color = '#f00';
-            feedback.classList.add('show');
-        }
-    }
-
-    // Mission briefing with assigned missions
-    assignMissions().then(missions => {
-        // Cryptographic decryption effect
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*!?<>[]{}+=';
-        
-        function decryptText(element, finalText) {
-            let html = '';
-            for (let i = 0; i < finalText.length; i++) {
-                if (finalText[i] === ' ') {
-                    html += ' ';
-                } else {
-                    html += `<span class="decrypt-char" data-index="${i}" data-final="${finalText[i]}">${chars[Math.floor(Math.random() * chars.length)]}</span>`;
-                }
-            }
-            element.innerHTML = html;
-
-            const spans = element.querySelectorAll('.decrypt-char');
-            
-            spans.forEach((span) => {
-                const finalChar = span.getAttribute('data-final');
-                const decryptDuration = 1500 + Math.random() * 2000;
-                const iterations = 30 + Math.floor(Math.random() * 40);
-                let currentIteration = 0;
-                
-                const interval = setInterval(() => {
-                    if (currentIteration < iterations) {
-                        span.textContent = chars[Math.floor(Math.random() * chars.length)];
-                        span.style.textShadow = '0 0 8px #0f0';
-                        currentIteration++;
-                    } else {
-                        clearInterval(interval);
-                        span.textContent = finalChar;
-                        span.style.textShadow = '0 0 5px #0f0';
-                    }
-                }, decryptDuration / iterations);
-            });
-        }
-
-        setTimeout(() => {
-            decryptText(document.getElementById('mission1'), missions[0]);
-            setTimeout(() => {
-                decryptText(document.getElementById('mission2'), missions[1]);
-            }, 500);
-        }, 500);
-    });
-</script>
-```
-
-</body>
-</html>
+  const agentName = new URLSearchParams(window.location.search).get("agent") || "Un
