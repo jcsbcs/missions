@@ -385,7 +385,6 @@
                         <canvas class="pill-canvas" id="bluePill"></canvas>
                     </div>
                     <p class="decrypt-text mission-text" id="mission1"></p>
-                    <p class="decrypt-text mission-text" id="mission1b" style="margin-top: 20px;"></p>
                 </div>
 
                 <!-- Red Pill Mission -->
@@ -394,7 +393,6 @@
                         <canvas class="pill-canvas" id="redPill"></canvas>
                     </div>
                     <p class="decrypt-text mission-text" id="mission2"></p>
-                    <p class="decrypt-text mission-text" id="mission2b" style="margin-top: 20px;"></p>
                 </div>
             </div>
 
@@ -471,7 +469,7 @@
 
                 // Check if agent already has missions
                 const agentDoc = await agentRef.get();
-                if (agentDoc.exists) {
+                if (agentDoc.exists && agentDoc.data().missions) {
                     return agentDoc.data().missions;
                 }
 
@@ -495,13 +493,12 @@
                     });
 
                     if (availableMissions.length < 2) {
-                        return ["All missions have been assigned.", "Contact mission control for further instructions."];
+                        return ["All missions have been assigned.", "Contact mission control."];
                     }
 
                     // Randomly select 2 different missions
                     const selected1 = availableMissions[Math.floor(Math.random() * availableMissions.length)];
                     
-                    // Remove selected mission from available pool
                     const remainingMissions = availableMissions.filter((m, i) => 
                         !(m.index === selected1.index && availableMissions.indexOf(m) === availableMissions.indexOf(selected1))
                     );
@@ -684,15 +681,20 @@
             if (!selectedMission) return;
             
             const feedback = document.getElementById('feedback');
-            const acceptBtn = document.getElementById('acceptBtn');
             
             try {
                 // Save the chosen mission to Firebase
                 const agentRef = db.collection('agents').doc(agentName);
-                await agentRef.update({
-                    chosenMission: selectedMissionText,
-                    chosenAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                
+                // Check if document exists
+                const agentDoc = await agentRef.get();
+                
+                if (agentDoc.exists) {
+                    await agentRef.update({
+                        chosenMission: selectedMissionText,
+                        chosenAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
                 
                 // Redirect to final mission page
                 window.location.href = `final-mission.html?agent=${encodeURIComponent(agentName)}&mission=${encodeURIComponent(selectedMissionText)}`;
@@ -705,8 +707,10 @@
             }
         }
 
-        // Mission briefing with assigned missions
+        // Mission assignment and display
         assignMissions().then(missions => {
+            console.log('Missions assigned:', missions); // Debug
+            
             // Cryptographic decryption effect
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*!?<>[]{}+=';
             
@@ -743,12 +747,14 @@
                 });
             }
 
+            // Decrypt both missions
             setTimeout(() => {
                 decryptText(document.getElementById('mission1'), missions[0]);
-                setTimeout(() => {
-                    decryptText(document.getElementById('mission2'), missions[1]);
-                }, 500);
             }, 500);
+            
+            setTimeout(() => {
+                decryptText(document.getElementById('mission2'), missions[1]);
+            }, 1000);
         });
     </script>
 </body>
