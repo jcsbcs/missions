@@ -683,25 +683,20 @@
             const feedback = document.getElementById('feedback');
             
             try {
-                // Save the chosen mission to Firebase
+                // Save the chosen mission to Firebase using set with merge
                 const agentRef = db.collection('agents').doc(agentName);
                 
-                // Check if document exists
-                const agentDoc = await agentRef.get();
-                
-                if (agentDoc.exists) {
-                    await agentRef.update({
-                        chosenMission: selectedMissionText,
-                        chosenAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
+                await agentRef.set({
+                    chosenMission: selectedMissionText,
+                    chosenAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
                 
                 // Redirect to final mission page
                 window.location.href = `final-mission.html?agent=${encodeURIComponent(agentName)}&mission=${encodeURIComponent(selectedMissionText)}`;
                 
             } catch (error) {
                 console.error('Error accepting mission:', error);
-                feedback.textContent = 'Error accepting mission. Please try again.';
+                feedback.textContent = 'Error: ' + error.message;
                 feedback.style.color = '#f00';
                 feedback.classList.add('show');
             }
