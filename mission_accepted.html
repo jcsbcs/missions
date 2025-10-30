@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mission Accepted</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+<style>
+  body {
+    background: black;
+    color: #00ffea;
+    font-family: 'Share Tech Mono', monospace;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  h1 {
+    color: #ff0044;
+    text-shadow: 0 0 15px #ff0044;
+  }
+  .mission {
+    margin-top: 40px;
+    font-size: 1.4rem;
+    text-shadow: 0 0 10px #00ffff;
+  }
+</style>
+</head>
+<body>
+<h1>Mission Accepted</h1>
+<div class="mission" id="missionText">Loading your mission...</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1b-lWnAfqVWxscg-AhIhOjI8vU2J-REo",
+    authDomain: "missions-7a024.firebaseapp.com",
+    projectId: "missions-7a024",
+    storageBucket: "missions-7a024.appspot.com",
+    messagingSenderId: "262943775673",
+    appId: "1:262943775673:web:ef5dd7bc1ce7690a1f6b8e"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const agentName = new URLSearchParams(window.location.search).get("agent");
+  const missionText = document.getElementById('missionText');
+
+  async function loadMission() {
+    if (!agentName) {
+      missionText.textContent = "Agent unknown.";
+      return;
+    }
+    const ref = doc(db, "agents", agentName);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      missionText.textContent = snap.data().acceptedMission;
+    } else {
+      missionText.textContent = "No mission found for this agent.";
+    }
+  }
+  loadMission();
+</script>
+</body>
+</html>
