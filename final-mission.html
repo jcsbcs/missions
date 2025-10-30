@@ -151,8 +151,14 @@
     <script>
         // Get mission from URL
         const params = new URLSearchParams(window.location.search);
-        const agentName = params.get('agent') || 'Agent';
+        const agentName = params.get('agent') || 'Unknown';
         const mission = params.get('mission') || 'Mission data unavailable';
+
+        console.log('Agent name:', agentName); // Debug log
+
+        // Update the good luck message with agent name
+        const goodLuckElement = document.getElementById('goodLuckText');
+        goodLuckElement.textContent = `GODSPEED, AGENT ${agentName.toUpperCase()}`;
 
         // Cryptographic decryption effect
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*!?<>[]{}+=';
