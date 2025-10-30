@@ -1,54 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Mission Accepted</title>
     <style>
-        html { background: #000; }
+        html { background:#000; }
         body {
-            background: #000;
-            color: #d4d4d4;
-            font-family: 'Courier New', monospace;
-            padding: 40px;
-            text-align: center;
+            background:#000; color:#d4d4d4; font-family:'Courier New', monospace; padding:40px; text-align:center;
         }
-        .stamp {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #c41e3a;
-            font-size: 48px;
-            font-weight: bold;
-            opacity: 0.3;
-            transform: rotate(-15deg);
-            border: 5px solid #c41e3a;
-            padding: 10px 30px;
-            letter-spacing: 5px;
-        }
-        h1 {
-            color: #c41e3a;
-            font-size: 36px;
-            text-shadow: 0 0 10px rgba(196,30,58,0.5);
-            margin-bottom: 20px;
-        }
-        .mission {
-            color: #0f0;
-            font-size: 20px;
-            text-shadow: 0 0 10px #0f0;
-            background: rgba(0,0,0,0.5);
-            display: inline-block;
-            padding: 20px;
-            border: 1px solid #333;
-            max-width: 900px;
-            line-height: 1.6;
-        }
-        .sub {
-            margin-top: 20px;
-            color: #0f0;
-            font-size: 14px;
-            letter-spacing: 2px;
-        }
+        .stamp { position:absolute; top:20px; right:20px; color:#c41e3a; font-size:48px; font-weight:bold; opacity:0.3; transform:rotate(-15deg); border:5px solid #c41e3a; padding:10px 30px; letter-spacing:5px; }
+        h1 { color:#c41e3a; font-size:36px; text-shadow:0 0 10px rgba(196,30,58,0.5); margin-bottom:20px; }
+        .mission { color:#0f0; font-size:20px; text-shadow:0 0 10px #0f0; background:rgba(0,0,0,0.5); display:inline-block; padding:20px; border:1px solid #333; max-width:900px; line-height:1.6; }
+        .sub { margin-top:20px; color:#0f0; font-size:14px; letter-spacing:2px; }
     </style>
 </head>
 <body>
@@ -57,11 +21,11 @@
     <div id="missionText" class="mission">Loading mission...</div>
     <div class="sub" id="agentSub"></div>
 
-    <!-- Firebase SDK (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
         const firebaseConfig = {
             apiKey: "AIzaSyAGDDZS4X7V8m6h_L4__GxtITHiwyyQ2LQ",
             authDomain: "missions-7a024.firebaseapp.com",
@@ -71,21 +35,21 @@
             appId: "1:907803260147:web:023fd43873947ce21c3386",
             measurementId: "G-P6VHBK3D3L"
         };
-
-        firebase.initializeApp(firebaseConfig);
+        try { firebase.initializeApp(firebaseConfig); } catch(e) {}
         const db = firebase.firestore();
 
         const params = new URLSearchParams(window.location.search);
-        const agentName = params.get('agent') || 'UNKNOWN';
+        const agentFromParam = params.get('agent') || params.get('Agent');
+        const agent = agentFromParam || sessionStorage.getItem('agent') || 'UNKNOWN';
 
-        document.getElementById('agentSub').textContent = `Agent: ${agentName}`;
+        document.getElementById('agentSub').textContent = `Agent: ${agent}`;
 
         async function loadAcceptedMission() {
             try {
-                const snap = await db.collection('agents').doc(agentName).get();
+                const snap = await db.collection('agents').doc(agent).get();
                 if (snap.exists) {
                     const data = snap.data();
-                    const text = data.chosenMission || data.acceptedMission || 'No mission recorded for this agent.';
+                    const text = data.chosenMission || data.acceptedMission || (data.missions && data.missions[0]) || 'No mission recorded for this agent.';
                     document.getElementById('missionText').textContent = text;
                 } else {
                     document.getElementById('missionText').textContent = 'No mission record found for this agent.';
@@ -97,6 +61,7 @@
         }
 
         loadAcceptedMission();
+    });
     </script>
 </body>
 </html>
